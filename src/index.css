@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Sora", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --bg: #f8f7f4;
+  --sidebar: #1a2e1a;
+  --card: #ffffff;
+  --border: #e5e1d8;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --accent: #16a34a;
+  --accent-light: #f0fdf4;
+  --accent-dark: #15803d;
+  --success: #16a34a;
+  --success-light: #f0fdf4;
+  --warning: #d97706;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-display);
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth transitions on interactive elements */
+button,
+input,
+textarea,
+select {
+  transition: all 0.15s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1cec7;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b5b2aa;
+}
