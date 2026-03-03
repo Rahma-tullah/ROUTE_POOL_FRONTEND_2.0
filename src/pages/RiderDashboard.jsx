@@ -7,6 +7,8 @@ import {
   updateBatchStatus,
   verifyDeliveryCode,
   getMyRatings,
+  getAvailableBatches,
+  claimBatch,
 } from "../api/rider.api";
 import SettingsPage from "./SettingsPage";
 import BatchMap from "../components/BatchMap";
@@ -605,7 +607,10 @@ const RatingsTab = ({ user }) => {
 /* ── Main ──────────────────────────────── */
 export default function RiderDashboard({ user, onLogout }) {
   const [batches, setBatches] = useState([]);
+  const [availableBatches, setAvailableBatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAvailable, setLoadingAvailable] = useState(false);
+  const [claimingId, setClaimingId] = useState(null);
   const [tab, setTab] = useState("batches");
   const [filter, setFilter] = useState("active");
 
@@ -621,9 +626,34 @@ export default function RiderDashboard({ user, onLogout }) {
     }
   }, [user.id]);
 
+  const loadAvailable = useCallback(async () => {
+    setLoadingAvailable(true);
+    try {
+      const res = await getAvailableBatches();
+      setAvailableBatches(res.data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingAvailable(false);
+    }
+  }, []);
+
+  const handleClaim = async (batchId) => {
+    setClaimingId(batchId);
+    try {
+      await claimBatch(batchId);
+      await Promise.all([load(), loadAvailable()]);
+    } catch (e) {
+      alert(e.message || "Failed to claim batch");
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadAvailable();
+  }, [load, loadAvailable]);
 
   const stats = {
     total: batches.length,
@@ -815,6 +845,62 @@ export default function RiderDashboard({ user, onLogout }) {
                     </button>
                   ))}
                 </div>
+
+                {/* Available batches section */}
+                {availableBatches.length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <p className="font-bold text-gray-900 text-sm">
+                        Available Batches
+                      </p>
+                      <span className="text-xs text-gray-400 ml-auto">
+                        {availableBatches.length} unclaimed
+                      </span>
+                    </div>
+                    {availableBatches.map((b) => (
+                      <div
+                        key={b.id}
+                        className="bg-white rounded-2xl border p-4 flex items-center justify-between gap-4"
+                        style={{
+                          borderColor: "var(--accent)",
+                          borderWidth: "1.5px",
+                        }}>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">
+                            Batch #{b.id}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {b.total_deliveries} deliveries · Created{" "}
+                            {new Date(b.created_at).toLocaleDateString("en-GB")}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleClaim(b.id)}
+                          disabled={claimingId === b.id}
+                          className="px-4 py-2 rounded-xl text-sm font-bold text-white flex-shrink-0 transition-all hover:brightness-110 active:scale-95 disabled:opacity-60"
+                          style={{
+                            background: "#16A34A",
+                            boxShadow: "0 3px 10px rgba(22,163,74,0.35)",
+                          }}>
+                          {claimingId === b.id ? "Claiming..." : "Accept batch"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* My batches section */}
+                {batches.length > 0 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <p className="font-bold text-gray-900 text-sm">
+                      My Batches
+                    </p>
+                    <span className="text-xs text-gray-400 ml-auto">
+                      {batches.length} total
+                    </span>
+                  </div>
+                )}
 
                 {loading ? (
                   <div className="flex items-center justify-center py-20">

@@ -59,3 +59,9 @@ export const updateRiderProfile = (id, payload) =>
 
 export const deleteRiderAccount = (id) =>
   request(`/api/riders/${id}`, { method: "DELETE" });
+
+// ── Available batches (unassigned) ───────────────────────
+export const getAvailableBatches = () => request("/api/batches/available");
+
+export const claimBatch = (batchId) =>
+  request(`/api/batches/${batchId}/claim`, { method: "POST" });
