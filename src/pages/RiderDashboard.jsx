@@ -183,7 +183,7 @@ const CodeInput = ({ value, onChange }) => {
     refs.current[Math.min(p.length, 7)]?.focus();
   };
   return (
-    <div className="flex gap-1.5">
+    <div className="flex gap-1.5 justify-center">
       {digits.map((d, i) => (
         <input
           key={i}
@@ -193,7 +193,7 @@ const CodeInput = ({ value, onChange }) => {
           onKeyDown={(e) => onKey(e, i)}
           onPaste={onPaste}
           maxLength={1}
-          className="flex-1 aspect-square text-center text-lg font-bold rounded-xl border-2
+          className="w-9 h-10 text-center text-base font-bold rounded-lg border-2
             border-gray-200 bg-white text-green-500 outline-none
             focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all"
           style={{ fontFamily: "var(--font-mono)" }}
@@ -611,6 +611,9 @@ export default function RiderDashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [loadingAvailable, setLoadingAvailable] = useState(false);
   const [claimingId, setClaimingId] = useState(null);
+  const [previewBatch, setPreviewBatch] = useState(null);
+  const [previewDeliveries, setPreviewDeliveries] = useState([]);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [tab, setTab] = useState("batches");
   const [filter, setFilter] = useState("active");
 
@@ -642,11 +645,26 @@ export default function RiderDashboard({ user, onLogout }) {
     setClaimingId(batchId);
     try {
       await claimBatch(batchId);
+      setPreviewBatch(null);
       await Promise.all([load(), loadAvailable()]);
     } catch (e) {
       alert(e.message || "Failed to claim batch");
     } finally {
       setClaimingId(null);
+    }
+  };
+
+  const handlePreview = async (batch) => {
+    setPreviewBatch(batch);
+    setPreviewDeliveries([]);
+    setLoadingPreview(true);
+    try {
+      const res = await getBatchWithDeliveries(batch.id);
+      setPreviewDeliveries(res.data?.deliveries || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingPreview(false);
     }
   };
 
@@ -861,12 +879,12 @@ export default function RiderDashboard({ user, onLogout }) {
                     {availableBatches.map((b) => (
                       <div
                         key={b.id}
-                        className="bg-white rounded-2xl border p-4 flex items-center justify-between gap-4"
+                        className="bg-white rounded-2xl border p-4 flex items-center justify-between gap-3"
                         style={{
                           borderColor: "var(--accent)",
                           borderWidth: "1.5px",
                         }}>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-900 text-sm">
                             Batch #{b.id}
                           </p>
@@ -875,16 +893,27 @@ export default function RiderDashboard({ user, onLogout }) {
                             {new Date(b.created_at).toLocaleDateString("en-GB")}
                           </p>
                         </div>
-                        <button
-                          onClick={() => handleClaim(b.id)}
-                          disabled={claimingId === b.id}
-                          className="px-4 py-2 rounded-xl text-sm font-bold text-white flex-shrink-0 transition-all hover:brightness-110 active:scale-95 disabled:opacity-60"
-                          style={{
-                            background: "#16A34A",
-                            boxShadow: "0 3px 10px rgba(22,163,74,0.35)",
-                          }}>
-                          {claimingId === b.id ? "Claiming..." : "Accept batch"}
-                        </button>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => handlePreview(b)}
+                            className="px-3 py-2 rounded-xl text-sm font-semibold border transition-colors hover:bg-gray-50"
+                            style={{
+                              borderColor: "var(--border)",
+                              color: "#374151",
+                            }}>
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleClaim(b.id)}
+                            disabled={claimingId === b.id}
+                            className="px-3 py-2 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-95 disabled:opacity-60"
+                            style={{
+                              background: "#16A34A",
+                              boxShadow: "0 3px 10px rgba(22,163,74,0.35)",
+                            }}>
+                            {claimingId === b.id ? "..." : "Accept"}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -941,6 +970,91 @@ export default function RiderDashboard({ user, onLogout }) {
           </div>
         )}
       </main>
+      {/* Batch preview modal */}
+      {previewBatch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col"
+            style={{ maxHeight: "80vh" }}>
+            <div
+              className="flex items-center justify-between px-5 py-4 border-b"
+              style={{ borderColor: "var(--border)" }}>
+              <div>
+                <h3 className="font-bold text-gray-900">
+                  Batch #{previewBatch.id}
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {previewBatch.total_deliveries} deliveries
+                </p>
+              </div>
+              <button
+                onClick={() => setPreviewBatch(null)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+                <Icon d={I.x} className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+              {loadingPreview ? (
+                <div className="flex items-center justify-center py-10">
+                  <div className="w-6 h-6 rounded-full border-2 border-green-200 border-t-green-500 animate-spin" />
+                </div>
+              ) : previewDeliveries.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8">
+                  No delivery details available
+                </p>
+              ) : (
+                previewDeliveries.map((d, i) => (
+                  <div
+                    key={d.id}
+                    className="flex gap-3 p-3 rounded-xl border"
+                    style={{ borderColor: "var(--border)" }}>
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white mt-0.5"
+                      style={{ background: "var(--accent)" }}>
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm">
+                        {d.customer_name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {d.address}
+                      </p>
+                      {d.package_description && (
+                        <p className="text-xs text-gray-400 mt-0.5 italic">
+                          {d.package_description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div
+              className="px-5 py-4 border-t flex gap-3"
+              style={{ borderColor: "var(--border)" }}>
+              <button
+                onClick={() => setPreviewBatch(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors hover:bg-gray-50"
+                style={{ borderColor: "var(--border)" }}>
+                Cancel
+              </button>
+              <button
+                onClick={() => handleClaim(previewBatch.id)}
+                disabled={claimingId === previewBatch.id}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 disabled:opacity-60"
+                style={{
+                  background: "#16A34A",
+                  boxShadow: "0 3px 10px rgba(22,163,74,0.35)",
+                }}>
+                {claimingId === previewBatch.id
+                  ? "Claiming..."
+                  : "Accept batch"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <ChatBot user={user} userType="rider" />
     </div>
   );
