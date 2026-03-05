@@ -9,7 +9,7 @@ import {
   getMyRatings,
   getAvailableBatches,
   claimBatch,
-  previewBatch,
+  previewBatch as fetchBatchPreview,
 } from "../api/rider.api";
 import SettingsPage from "./SettingsPage";
 import BatchMap from "../components/BatchMap";
@@ -660,7 +660,7 @@ export default function RiderDashboard({ user, onLogout }) {
     setPreviewDeliveries([]);
     setLoadingPreview(true);
     try {
-      const res = await previewBatch(batch.id);
+      const res = await fetchBatchPreview(batch.id);
       setPreviewDeliveries(res.data?.deliveries || []);
     } catch (e) {
       console.error(e);
