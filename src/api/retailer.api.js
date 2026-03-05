@@ -20,7 +20,7 @@ const request = async (path, options = {}) => {
 
 // ── Deliveries ───────────────────────────────────────────
 export const getMyDeliveries = (retailerId) =>
-  request(`/api/deliveries/retailer/${retailerId}`);
+  request(`/api/deliveries/retailer/${retailerId}/full`);
 
 export const createDelivery = (payload) =>
   request("/api/deliveries", { method: "POST", body: JSON.stringify(payload) });

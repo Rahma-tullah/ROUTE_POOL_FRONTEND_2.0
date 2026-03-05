@@ -698,21 +698,26 @@ export default function RetailerDashboard({ user, onLogout }) {
                 style={{ borderColor: "var(--border)" }}>
                 {/* Table header — desktop only */}
                 <div
-                  className="hidden md:grid grid-cols-[1fr_1fr_1fr_120px_140px] gap-4 px-6 py-3 border-b"
+                  className="hidden md:grid grid-cols-[1fr_1fr_1fr_100px_160px_120px] gap-4 px-6 py-3 border-b"
                   style={{
                     background: "#FAFAF8",
                     borderColor: "var(--border)",
                   }}>
-                  {["Customer", "Address", "Package", "Status", "Actions"].map(
-                    (h) => (
-                      <p
-                        key={h}
-                        className="text-xs font-medium text-gray-400 uppercase tracking-widest"
-                        style={{ fontFamily: "var(--font-mono)" }}>
-                        {h}
-                      </p>
-                    ),
-                  )}
+                  {[
+                    "Customer",
+                    "Address",
+                    "Package",
+                    "Status",
+                    "Rider",
+                    "Actions",
+                  ].map((h) => (
+                    <p
+                      key={h}
+                      className="text-xs font-medium text-gray-400 uppercase tracking-widest"
+                      style={{ fontFamily: "var(--font-mono)" }}>
+                      {h}
+                    </p>
+                  ))}
                 </div>
                 {filtered.map((d, i) => (
                   <div
@@ -735,6 +740,29 @@ export default function RetailerDashboard({ user, onLogout }) {
                         <p className="text-xs text-gray-500 mt-1 line-clamp-1">
                           {d.address}
                         </p>
+                        {d.batch_info ? (
+                          <div className="mt-1.5 flex items-center gap-1.5">
+                            <span
+                              className="text-xs font-medium px-1.5 py-0.5 rounded-md"
+                              style={{
+                                background: "#F0FDF4",
+                                color: "#15803D",
+                                fontFamily: "var(--font-mono)",
+                              }}>
+                              Batch #{d.batch_info.batch_id}
+                            </span>
+                            {d.batch_info.rider ? (
+                              <span className="text-xs text-gray-500">
+                                {d.batch_info.rider.name} ·{" "}
+                                {d.batch_info.rider.phone}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400 italic">
+                                Awaiting rider
+                              </span>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         {(d.status === "pending" ||
@@ -766,7 +794,7 @@ export default function RetailerDashboard({ user, onLogout }) {
                       </div>
                     </div>
                     {/* Desktop layout */}
-                    <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_120px_140px] gap-4 items-center">
+                    <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_100px_160px_120px] gap-4 items-center">
                       <div>
                         <p className="font-semibold text-gray-900 text-sm">
                           {d.customer_name}
@@ -787,6 +815,38 @@ export default function RetailerDashboard({ user, onLogout }) {
                       </p>
                       <div>
                         <Badge status={d.status} />
+                      </div>
+                      <div>
+                        {d.batch_info ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span
+                              className="text-xs font-semibold"
+                              style={{
+                                color: "#15803D",
+                                fontFamily: "var(--font-mono)",
+                              }}>
+                              Batch #{d.batch_info.batch_id}
+                            </span>
+                            {d.batch_info.rider ? (
+                              <>
+                                <span className="text-xs font-medium text-gray-700">
+                                  {d.batch_info.rider.name}
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                  {d.batch_info.rider.phone}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-xs text-gray-400 italic">
+                                Awaiting rider
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-300 italic">
+                            No batch yet
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5">
                         {(d.status === "pending" ||
