@@ -65,3 +65,6 @@ export const getAvailableBatches = () => request("/api/batches/available");
 
 export const claimBatch = (batchId) =>
   request(`/api/batches/${batchId}/claim`, { method: "POST" });
+
+export const previewBatch = (batchId) =>
+  request(`/api/batches/${batchId}/preview`);
